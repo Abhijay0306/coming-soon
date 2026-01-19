@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Before & After Image Slider</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Custom Range Slider Styling */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 0; 
+            height: 0;
+            background: transparent;
+        }
+        
+        input[type=range]::-moz-range-thumb {
+            width: 0;
+            height: 0;
+            background: transparent;
+            border: none;
+        }
+
+        /* Hide the default track */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+
+        /* Prevent image dragging which interferes with slider */
+        img {
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+    </style>
+</head>
+<body class="bg-white min-h-screen flex flex-col items-center py-12 px-4 text-slate-900">
+
+    <header class="mb-10 text-center max-w-2xl">
+        <h1 class="text-3xl font-bold mb-3 text-slate-900">Image Comparison</h1>
+        <p class="text-slate-500">Drag the slider to compare the two images. You can upload your own images below to customize the view.</p>
+    </header>
+
+    <!-- Main Component Card -->
+    <div class="w-full max-w-4xl">
+        
+        <!-- Comparison Container -->
+        <div id="comparison-container" class="relative w-full aspect-[16/9] rounded-xl overflow-hidden bg-slate-100 select-none group cursor-ew-resize">
+            
+            <!-- Image 1 (Background / After) -->
+            <img id="img-after" 
+                 src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?q=80&w=2070&auto=format&fit=crop" 
+                 alt="After" 
+                 class="absolute inset-0 w-full h-full object-cover">
+                 
+            <!-- Label After -->
+            <span class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded select-none pointer-events-none z-10">
+                AFTER
+            </span>
+
+            <!-- Image 2 (Foreground / Before) - Clipped -->
+            <div id="img-before-wrapper" class="absolute inset-0 w-full h-full overflow-hidden" style="clip-path: inset(0 50% 0 0);">
+                <img id="img-before" 
+                     src="https://images.unsplash.com/photo-1470770903676-69b98201ea1c?q=80&w=2070&auto=format&fit=crop" 
+                     alt="Before" 
+                     class="absolute inset-0 w-full h-full object-cover max-w-none">
+                
+                 <!-- Label Before -->
+                <span class="absolute top-4 left-4 bg-black/50 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded select-none pointer-events-none">
+                    BEFORE
+                </span>
+            </div>
+
+            <!-- Slider Handle Line -->
+            <div id="slider-handle" class="absolute inset-y-0 w-1 bg-white shadow-[0_0_10px_rgba(0,0,0,0.5)] pointer-events-none z-20" style="left: 50%;">
+                <!-- Handle Circle -->
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-800">
+                    <i data-lucide="chevrons-left-right" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- Invisible Range Input (The real controller) -->
+            <input type="range" 
+                   min="0" 
+                   max="100" 
+                   value="50" 
+                   class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-30 focus:outline-none"
+                   oninput="updateSlider(this.value)">
+        </div>
+    </div>
+
+    <!-- Controls / Upload Section -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+        
+        <!-- Upload Before -->
+        <div class="bg-slate-50 p-6 rounded-xl flex flex-col gap-3">
+            <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="image" class="text-blue-500"></i>
+                <h3 class="font-semibold text-slate-900">Before Image</h3>
+            </div>
+            <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-200 border-dashed rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <p class="text-sm text-slate-500"><span class="font-semibold">Click to upload</span></p>
+                    <p class="text-xs text-slate-400 mt-1">PNG, JPG or WebP</p>
+                </div>
+                <input type="file" class="hidden" accept="image/*" onchange="handleImageUpload(event, 'img-before')">
+            </label>
+        </div>
+
+        <!-- Upload After -->
+        <div class="bg-slate-50 p-6 rounded-xl flex flex-col gap-3">
+             <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="sparkles" class="text-purple-500"></i>
+                <h3 class="font-semibold text-slate-900">After Image</h3>
+            </div>
+            <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-200 border-dashed rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <p class="text-sm text-slate-500"><span class="font-semibold">Click to upload</span></p>
+                    <p class="text-xs text-slate-400 mt-1">PNG, JPG or WebP</p>
+                </div>
+                <input type="file" class="hidden" accept="image/*" onchange="handleImageUpload(event, 'img-after')">
+            </label>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Slider Logic
+        function updateSlider(val) {
+            // Update the clip-path of the top image
+            // inset(top right bottom left)
+            // We want to clip from the RIGHT based on the value
+            const percentage = 100 - val;
+            const clipPathValue = `inset(0 ${percentage}% 0 0)`;
+            document.getElementById('img-before-wrapper').style.clipPath = clipPathValue;
+            
+            // Move the visual handle
+            document.getElementById('slider-handle').style.left = `${val}%`;
+        }
+
+        // Image Upload Handler
+        function handleImageUpload(event, targetId) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgElement = document.getElementById(targetId);
+                    imgElement.src = e.target.result;
+                    
+                    // Reset sizing to cover to ensure it looks good
+                    imgElement.style.objectFit = 'cover';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+</html>
